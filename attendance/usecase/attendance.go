@@ -4,11 +4,12 @@ package usecase
 
 import (
 	"semi_systems/attendance/domain"
+	"semi_systems/packages/context"
 )
 
 type AttendanceInputPort interface {
-	GetAllAttendance() error
-	UpdateStatus(name string, status bool) error
+	GetAllAttendance(ctx context.Context) error
+	UpdateStatus(ctx context.Context, name string, status bool) error
 }
 
 type AttendanceOutputPort interface {
@@ -17,8 +18,8 @@ type AttendanceOutputPort interface {
 }
 
 type AttendanceRepository interface {
-	GetAll() ([]*domain.Attendance, error)
-	UpdateStatus(name string, status bool) error
+	GetAll(ctx context.Context) ([]*domain.Attendance, error)
+	UpdateStatus(ctx context.Context, name string, status bool) error
 }
 
 type attendance struct {
@@ -37,16 +38,16 @@ func NewAttendanceInputFactory(ar AttendanceRepository) AttendanceInputFactory {
 	}
 }
 
-func (a *attendance) GetAllAttendance() error {
-	attendances, err := a.AttendanceRepo.GetAll()
+func (a *attendance) GetAllAttendance(ctx context.Context) error {
+	attendances, err := a.AttendanceRepo.GetAll(ctx)
 	if err != nil {
 		return err
 	}
 	return a.outputPort.GetAllAttendance(attendances)
 }
 
-func (a *attendance) UpdateStatus(name string, status bool) error {
-	err := a.AttendanceRepo.UpdateStatus(name, status)
+func (a *attendance) UpdateStatus(ctx context.Context, name string, status bool) error {
+	err := a.AttendanceRepo.UpdateStatus(ctx, name, status)
 	if err != nil {
 		return err
 	}

@@ -4,15 +4,14 @@ import (
 	"gorm.io/gorm"
 	"semi_systems/attendance/domain"
 	"semi_systems/attendance/usecase"
+	"semi_systems/packages/context"
 	"semi_systems/packages/errors"
 )
 
-type attendance struct {
-	db *gorm.DB
-}
+type attendance struct{}
 
-func NewAttendanceRepository(db *gorm.DB) usecase.AttendanceRepository {
-	return &attendance{db: db}
+func NewAttendanceRepository() usecase.AttendanceRepository {
+	return &attendance{}
 }
 
 func dbError(err error) error {
@@ -26,14 +25,17 @@ func dbError(err error) error {
 	}
 }
 
-func (a attendance) GetAll() ([]*domain.Attendance, error) {
+func (a attendance) GetAll(ctx context.Context) ([]*domain.Attendance, error) {
+	db := ctx.DB()
+
 	var attendances []*domain.Attendance
-	if err := a.db.Find(&attendances).Error; err != nil {
+	if err := db.Find(&attendances).Error; err != nil {
 		return nil, dbError(err)
 	}
 	return attendances, nil
 }
 
-func (a *attendance) UpdateStatus(name string, status bool) error {
-	return a.db.Model(&domain.Attendance{}).Where("name = ?", name).Update("status", status).Error
+func (a *attendance) UpdateStatus(ctx context.Context, name string, status bool) error {
+	db := ctx.DB()
+	return db.Model(&domain.Attendance{}).Where("name = ?", name).Update("status", status).Error
 }
