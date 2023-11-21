@@ -1,0 +1,26 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - '8080:8080'
+    volumes:
+      - '.:/go/src'
+    depends_on:
+      - 'db'
+    tty:
+      true
+  db:
+    image: 'mysql:8.0'
+    ports:
+      - '33065:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: semi_system
+      MYSQL_USER: semi_system
+      MYSQL_PASSWORD: password
+      TZ: 'Asia/Tokyo'
+    volumes:
+      - './tmp/mysql:/var/lib/mysql'

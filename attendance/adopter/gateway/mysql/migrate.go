@@ -10,7 +10,7 @@ import (
 )
 
 func InitDatabase() {
-	db, err := database.NewDB()
+	db, err := driver.NewDB()
 	if err != nil {
 		fmt.Println("Error initializing database:", err)
 		return
