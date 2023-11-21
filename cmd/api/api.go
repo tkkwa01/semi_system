@@ -7,6 +7,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	httpController "semi_systems/attendance/adopter/controller/http"
+	mysqlRepository "semi_systems/attendance/adopter/gateway/mysql"
+	"semi_systems/attendance/adopter/presenter"
+	"semi_systems/attendance/usecase"
 	"semi_systems/config"
 	"semi_systems/driver"
 	"semi_systems/packages/http/middleware"
@@ -30,10 +34,14 @@ func Execute() {
 	r := router.New(engine, driver.GetRDB)
 
 	//mysql
+	attendanceRepository := mysqlRepository.NewAttendanceRepository()
 
 	//usecase
+	attendanceInputFactory := usecase.NewAttendanceInputFactory(attendanceRepository)
+	attendanceOutputFactory := presenter.NewAttendanceOutputFactory()
 
 	//controller
+	httpController.NewAttendance(r, attendanceInputFactory, attendanceOutputFactory)
 
 	//serve
 	srv := &http.Server{
