@@ -4,39 +4,52 @@ package usecase
 
 import (
 	"semi_systems/attendance/domain"
-	"semi_systems/attendance/repository"
 )
 
-type AttendanceUsecase struct {
-	attendanceRepo repository.AttendanceRepository
+type AttendanceInputPort interface {
+	GetAllAttendance() error
+	UpdateStatus(name string, status bool) error
 }
 
-func NewAttendanceUsecase(repo repository.AttendanceRepository) *AttendanceUsecase {
-	return &AttendanceUsecase{
-		attendanceRepo: repo,
+type AttendanceOutputPort interface {
+	GetAllAttendance(res []*domain.Attendance) error
+	UpdateStatus(success bool) error
+}
+
+type AttendanceRepository interface {
+	GetAll() ([]*domain.Attendance, error)
+	UpdateStatus(name string, status bool) error
+}
+
+type attendance struct {
+	outputPort     AttendanceOutputPort
+	AttendanceRepo AttendanceRepository
+}
+
+type AttendanceInputFactory func(outputPort AttendanceOutputPort) AttendanceInputPort
+
+func NewAttendanceInputFactory(ar AttendanceRepository) AttendanceInputFactory {
+	return func(o AttendanceOutputPort) AttendanceInputPort {
+		return &attendance{
+			outputPort:     o,
+			AttendanceRepo: ar,
+		}
 	}
 }
 
-func (uc *AttendanceUsecase) GetAllAttendances() ([]domain.Attendance, error) {
-	return uc.attendanceRepo.GetAll()
-}
-
-func (uc *AttendanceUsecase) RegisterAttendance(attendance *domain.Attendance) error {
-	return uc.attendanceRepo.Register(attendance)
-}
-
-func (uc *AttendanceUsecase) UpdateAttendanceStatus(name string, status bool) (bool, error) {
-	exists, err := uc.attendanceRepo.Exists(name)
+func (a *attendance) GetAllAttendance() error {
+	attendances, err := a.AttendanceRepo.GetAll()
 	if err != nil {
-		return false, err
+		return err
 	}
-	if !exists {
-		return false, nil
+	return a.outputPort.GetAllAttendance(attendances)
+}
+
+func (a *attendance) UpdateStatus(name string, status bool) error {
+	err := a.AttendanceRepo.UpdateStatus(name, status)
+	if err != nil {
+		return err
 	}
 
-	if err := uc.attendanceRepo.UpdateStatus(name, status); err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return a.outputPort.UpdateStatus(true)
 }
