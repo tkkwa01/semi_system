@@ -1,13 +1,12 @@
 package router
 
 import (
-	"log"
-	"net/http"
-
-	"kobasemi_attendance/packages/context"
-	errors "kobasemi_attendance/packages/errors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"log"
+	"net/http"
+	"semi_systems/packages/context"
+	"semi_systems/packages/errors"
 )
 
 type Router struct {

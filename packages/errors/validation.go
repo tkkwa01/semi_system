@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"github.com/go-playground/validator/v10"
 	"github.com/iancoleman/strcase"
-	"kobasemi_attendance/packages/util"
-	"kobasemi_attendance/packages/validation"
 	"regexp"
+	"semi_systems/packages/util"
+	"semi_systems/packages/validation"
 )
 
 type Validation struct {

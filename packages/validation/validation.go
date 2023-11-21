@@ -3,8 +3,8 @@ package validation
 import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	"kobasemi_attendance/packages/util"
 	"reflect"
+	"semi_systems/packages/util"
 )
 
 var (
