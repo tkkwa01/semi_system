@@ -58,16 +58,19 @@ func NewUserInputFactory(ur UserRepository) UserInputFactory {
 }
 
 func (u User) CreateUser(ctx context.Context, req *request.UserCreate) error {
-	newUser := &domain.User{
-		Email:        req.Email,
-		Introduction: req.Introduction,
+	newUser, err := domain.NewUser(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	if ctx.IsInValid() {
+		return ctx.ValidationError()
 	}
 
 	id, err := u.UserRepo.CreateUser(ctx, newUser)
 	if err != nil {
 		return err
 	}
-
 	return u.outputPort.CreateUser(id)
 }
 
@@ -97,9 +100,6 @@ func (u User) UpdateUser(ctx context.Context, req *request.UserUpdate) error {
 
 	if req.Email != "" {
 		user.Email = req.Email
-	}
-	if req.Introduction != "" {
-		user.Introduction = req.Introduction
 	}
 
 	err = u.UserRepo.UpdateUser(ctx, user)

@@ -15,7 +15,7 @@ services:
   db:
     image: 'mysql:8.0'
     ports:
-      - '33065:3306'
+      - '3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: semi_system

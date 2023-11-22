@@ -9,7 +9,6 @@ import (
 type User struct {
 	ID            uint                `json:"id"`
 	Email         string              `json:"email"`
-	Introduction  string              `json:"introduction"`
 	Password      vobj.Password       `json:"-"`
 	RecoveryToken *vobj.RecoveryToken `json:"-"`
 }
@@ -17,7 +16,6 @@ type User struct {
 func NewUser(ctx context.Context, dto *request.UserCreate) (*User, error) {
 	var user = User{
 		Email:         dto.Email,
-		Introduction:  dto.Introduction,
 		RecoveryToken: vobj.NewRecoveryToken(""),
 	}
 
