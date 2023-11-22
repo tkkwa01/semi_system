@@ -14,14 +14,14 @@ type EnvType struct {
 		Secret string `required:"true"`
 		URL    string `required:"true"`
 	}
-	//DB struct {
-	//	Socket   string
-	//	Host     string
-	//	Port     uint
-	//	User     string `required:"true"`
-	//	Password string `required:"true"`
-	//	Name     string `required:"true"`
-	//}
+	DB struct {
+		Socket   string
+		Host     string
+		Port     uint
+		User     string `required:"true"`
+		Password string `required:"true"`
+		Name     string `required:"true"`
+	}
 	//SMTP struct {
 	//	Host     string `required:"true"`
 	//	Port     string `required:"true"`
