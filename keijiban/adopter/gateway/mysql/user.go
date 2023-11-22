@@ -3,6 +3,7 @@ package mysql
 import (
 	"gorm.io/gorm"
 	"semi_systems/keijiban/domain"
+	"semi_systems/keijiban/domain/vobj"
 	"semi_systems/keijiban/usecase"
 	"semi_systems/packages/context"
 	"semi_systems/packages/errors"
@@ -73,4 +74,36 @@ func (u user) DeleteUser(ctx context.Context, id uint) error {
 		return res.Error
 	}
 	return nil
+}
+
+func (u user) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	db := ctx.DB()
+
+	var dest domain.User
+	err := db.Where(&domain.User{Email: email}).First(&dest).Error
+	if err != nil {
+		return nil, dbError(err)
+	}
+	return &dest, nil
+}
+
+func (u user) EmailExist(ctx context.Context, email string) (bool, error) {
+	db := ctx.DB()
+
+	var count int64
+	if err := db.Model(&domain.User{}).Where(&domain.User{Email: email}).Count(&count).Error; err != nil {
+		return false, dbError(err)
+	}
+	return count > 0, nil
+}
+
+func (u user) GetByRecoveryToken(ctx context.Context, recoverToken string) (*domain.User, error) {
+	db := ctx.DB()
+
+	var dest domain.User
+	err := db.Where(&domain.User{RecoveryToken: vobj.NewRecoveryToken(recoverToken)}).First(&dest).Error
+	if err != nil {
+		return nil, dbError(err)
+	}
+	return &dest, nil
 }

@@ -1,9 +1,12 @@
 package presenter
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"semi_systems/config"
 	"semi_systems/keijiban/domain"
+	"semi_systems/keijiban/resource/response"
 	"semi_systems/keijiban/usecase"
 )
 
@@ -41,5 +44,45 @@ func (u user) UpdateUser(res domain.User) error {
 
 func (u user) DeleteUser() error {
 	u.c.JSON(http.StatusOK, "")
+	return nil
+}
+
+func (u user) Login(isSession bool, res *response.UserLogin) error {
+	if res == nil {
+		u.c.Status(http.StatusUnauthorized)
+		return nil
+	}
+
+	if isSession {
+		session := sessions.DefaultMany(u.c, config.UserRealm)
+		session.Set("user", res.Token)
+		session.Set("refresh_token", res.RefreshToken)
+		if err := session.Save(); err != nil {
+			return err
+		}
+		u.c.Status(http.StatusOK)
+	} else {
+		u.c.JSON(http.StatusOK, res)
+	}
+	return nil
+}
+
+func (u user) RefreshToken(isSession bool, res *response.UserLogin) error {
+	if res == nil {
+		u.c.Status(http.StatusUnauthorized)
+		return nil
+	}
+
+	if isSession {
+		session := sessions.DefaultMany(u.c, config.UserRealm)
+		session.Set("user", res.Token)
+		session.Set("refresh_token", res.RefreshToken)
+		if err := session.Save(); err != nil {
+			return err
+		}
+		u.c.Status(http.StatusOK)
+	} else {
+		u.c.JSON(http.StatusOK, res)
+	}
 	return nil
 }

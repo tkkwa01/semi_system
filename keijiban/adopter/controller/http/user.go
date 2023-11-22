@@ -3,10 +3,12 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"semi_systems/config"
 	"semi_systems/keijiban/adopter/presenter"
 	"semi_systems/keijiban/resource/request"
 	"semi_systems/keijiban/usecase"
 	"semi_systems/packages/context"
+	"semi_systems/packages/http/middleware"
 	"semi_systems/packages/http/router"
 	"strconv"
 )
@@ -23,12 +25,16 @@ func NewUser(r *router.Router, inputFactory usecase.UserInputFactory, outputFact
 		outputFactory: outputFactory,
 	}
 
-	r.Group("users", nil, func(r *router.Router) {
+	r.Group("user", nil, func(r *router.Router) {
 		r.Post("", handler.CreateUser)
-		r.Get("", handler.GetAll)
-		r.Get(":id", handler.GetUserByID)
-		r.Put(":id", handler.UpdateUser)
-		r.Delete(":id", handler.DeleteUser)
+		r.Post("login", handler.Login)
+		r.Post("refresh-token", handler.RefreshToken)
+	})
+
+	r.Group("", []gin.HandlerFunc{middleware.Auth(true, config.UserRealm, true)}, func(r *router.Router) {
+		r.Group("user", nil, func(r *router.Router) {
+			r.Get("me", handler.GetMe)
+		})
 	})
 }
 
@@ -44,6 +50,41 @@ func (u user) CreateUser(ctx context.Context, c *gin.Context) error {
 
 	return inputPort.CreateUser(ctx, &req)
 }
+
+func (u user) Login(ctx context.Context, c *gin.Context) error {
+	var req request.UserLogin
+
+	if !bind(c, &req) {
+		return nil
+	}
+
+	outputPort := u.outputFactory(c)
+	inputPort := u.inputFactory(outputPort)
+
+	return inputPort.Login(ctx, &req)
+}
+
+func (u user) RefreshToken(_ context.Context, c *gin.Context) error {
+	var req request.UserRefreshToken
+
+	if !bind(c, &req) {
+		return nil
+	}
+
+	outputPort := u.outputFactory(c)
+	inputPort := u.inputFactory(outputPort)
+
+	return inputPort.RefreshToken(&req)
+}
+
+func (u user) GetMe(ctx context.Context, c *gin.Context) error {
+	outputPort := u.outputFactory(c)
+	inputPort := u.inputFactory(outputPort)
+
+	return inputPort.GetUserByID(ctx, ctx.UID())
+}
+
+//ここより下のメソッドは今回は使わないことにした
 
 func (u user) GetAll(ctx context.Context, c *gin.Context) error {
 	outputPort := u.outputFactory(c)

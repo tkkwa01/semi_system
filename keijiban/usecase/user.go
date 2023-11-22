@@ -1,9 +1,13 @@
 package usecase
 
 import (
+	jwt "github.com/ken109/gin-jwt"
+	"semi_systems/config"
 	"semi_systems/keijiban/domain"
 	"semi_systems/keijiban/resource/request"
+	"semi_systems/keijiban/resource/response"
 	"semi_systems/packages/context"
+	"semi_systems/packages/errors"
 )
 
 type UserInputPort interface {
@@ -12,6 +16,8 @@ type UserInputPort interface {
 	GetUserByID(ctx context.Context, id uint) error
 	UpdateUser(ctx context.Context, req *request.UserUpdate) error
 	DeleteUser(ctx context.Context, id uint) error
+	Login(ctx context.Context, req *request.UserLogin) error
+	RefreshToken(req *request.UserRefreshToken) error
 }
 
 type UserOutputPort interface {
@@ -20,6 +26,8 @@ type UserOutputPort interface {
 	GetUserByID(res domain.User) error
 	UpdateUser(res domain.User) error
 	DeleteUser() error
+	Login(isSession bool, res *response.UserLogin) error
+	RefreshToken(isSession bool, res *response.UserLogin) error
 }
 
 type UserRepository interface {
@@ -28,6 +36,9 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, id uint) (*domain.User, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
 	DeleteUser(ctx context.Context, id uint) error
+	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
+	EmailExist(ctx context.Context, email string) (bool, error)
+	GetByRecoveryToken(ctx context.Context, recoverToken string) (*domain.User, error)
 }
 
 type User struct {
@@ -105,4 +116,41 @@ func (u User) DeleteUser(ctx context.Context, id uint) error {
 	}
 
 	return u.outputPort.DeleteUser()
+}
+
+func (u User) Login(ctx context.Context, req *request.UserLogin) error {
+	user, err := u.UserRepo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+
+	if user.Password.IsValid(req.Password) {
+		var res response.UserLogin
+		res.Token, res.RefreshToken, err = jwt.IssueToken(config.UserRealm, jwt.Claims{
+			"uid": user.ID,
+		})
+		if err != nil {
+			return errors.NewUnexpected(err)
+		}
+		return u.outputPort.Login(req.Session, &res)
+	}
+	return u.outputPort.Login(req.Session, nil)
+}
+
+func (u User) RefreshToken(req *request.UserRefreshToken) error {
+	var (
+		res response.UserLogin
+		ok  bool
+		err error
+	)
+
+	ok, res.Token, res.RefreshToken, err = jwt.RefreshToken(config.UserRealm, req.RefreshToken)
+	if err != nil {
+		return errors.NewUnexpected(err)
+	}
+
+	if !ok {
+		return nil
+	}
+	return u.outputPort.RefreshToken(req.Session, &res)
 }

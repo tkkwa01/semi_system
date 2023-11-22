@@ -10,6 +10,10 @@ var Env EnvType
 
 type EnvType struct {
 	Port string `default:"8080"`
+	App  struct {
+		Secret string `required:"true"`
+		URL    string `required:"true"`
+	}
 	//DB struct {
 	//	Socket   string
 	//	Host     string

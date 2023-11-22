@@ -8,11 +8,15 @@ import (
 	"os"
 	"os/signal"
 	httpController "semi_systems/attendance/adopter/controller/http"
-	mysqlRepository "semi_systems/attendance/adopter/gateway/mysql"
+	attendanceMysqlRepository "semi_systems/attendance/adopter/gateway/mysql"
 	"semi_systems/attendance/adopter/presenter"
 	"semi_systems/attendance/usecase"
 	"semi_systems/config"
 	"semi_systems/driver"
+	userHttpController "semi_systems/keijiban/adopter/controller/http"
+	keijibanMysqlRepository "semi_systems/keijiban/adopter/gateway/mysql"
+	userPresenter "semi_systems/keijiban/adopter/presenter"
+	userUsecase "semi_systems/keijiban/usecase"
 	"semi_systems/packages/http/middleware"
 	"semi_systems/packages/http/router"
 	"semi_systems/packages/log"
@@ -34,14 +38,18 @@ func Execute() {
 	r := router.New(engine, driver.GetRDB)
 
 	//mysql
-	attendanceRepository := mysqlRepository.NewAttendanceRepository()
+	attendanceRepository := attendanceMysqlRepository.NewAttendanceRepository()
+	userRepository := keijibanMysqlRepository.NewUserRepository()
 
 	//usecase
 	attendanceInputFactory := usecase.NewAttendanceInputFactory(attendanceRepository)
 	attendanceOutputFactory := presenter.NewAttendanceOutputFactory()
+	userInputFactory := userUsecase.NewUserInputFactory(userRepository)
+	userOutputFactory := userPresenter.NewUserOutputFactory()
 
 	//controller
 	httpController.NewAttendance(r, attendanceInputFactory, attendanceOutputFactory)
+	userHttpController.NewUser(r, userInputFactory, userOutputFactory)
 
 	//serve
 	srv := &http.Server{
