@@ -7,6 +7,9 @@ import (
 	"os"
 	"semi_systems/attendance/domain"
 	"semi_systems/driver"
+	userdomain "semi_systems/keijiban/domain"
+	"semi_systems/keijiban/domain/vobj"
+	"strings"
 )
 
 func InitDatabase() {
@@ -17,12 +20,13 @@ func InitDatabase() {
 	}
 
 	loadDataFromFile(db)
+	loadUsersFromFile(db)
 }
 
 func loadDataFromFile(db *gorm.DB) {
-	file, err := os.Open("names.txt")
+	file, err := os.Open("name.txt")
 	if err != nil {
-		fmt.Println("Error opening names.txt:", err)
+		fmt.Println("Error opening name.txt:", err)
 		return
 	}
 	defer file.Close()
@@ -39,6 +43,43 @@ func loadDataFromFile(db *gorm.DB) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading names.txt:", err)
+		fmt.Println("Error reading name.txt:", err)
+	}
+}
+
+func loadUsersFromFile(db *gorm.DB) {
+	file, err := os.Open("user.txt")
+	if err != nil {
+		fmt.Println("Error opening user.txt:", err)
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, " ", 2)
+		if len(parts) != 2 {
+			fmt.Printf("Invalid line format: %s\n", line)
+			continue
+		}
+
+		name, password := parts[0], parts[1]
+
+		// 新しいユーザーオブジェクトを作成
+		user := userdomain.User{
+			Name:          name,
+			Password:      vobj.Password(password),
+			RecoveryToken: vobj.NewRecoveryToken(""),
+		}
+
+		result := db.Create(&user)
+		if result.Error != nil {
+			fmt.Println("Error writing user to database:", result.Error)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading user.txt:", err)
 	}
 }
