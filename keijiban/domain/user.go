@@ -8,14 +8,14 @@ import (
 
 type User struct {
 	ID            uint                `json:"id"`
-	Email         string              `json:"email"`
+	Name          string              `json:"name"`
 	Password      vobj.Password       `json:"-"`
 	RecoveryToken *vobj.RecoveryToken `json:"-"`
 }
 
 func NewUser(ctx context.Context, dto *request.UserCreate) (*User, error) {
 	var user = User{
-		Email:         dto.Email,
+		Name:          dto.Name,
 		RecoveryToken: vobj.NewRecoveryToken(""),
 	}
 

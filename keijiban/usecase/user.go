@@ -1,13 +1,16 @@
 package usecase
 
 import (
-	jwt "github.com/ken109/gin-jwt"
+	stderrors "errors"
+	"github.com/dgrijalva/jwt-go"
 	"semi_systems/config"
 	"semi_systems/keijiban/domain"
 	"semi_systems/keijiban/resource/request"
 	"semi_systems/keijiban/resource/response"
 	"semi_systems/packages/context"
 	"semi_systems/packages/errors"
+	"strconv"
+	"time"
 )
 
 type UserInputPort interface {
@@ -36,7 +39,7 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, id uint) (*domain.User, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
 	DeleteUser(ctx context.Context, id uint) error
-	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
+	GetUserByName(ctx context.Context, name string) (*domain.User, error)
 	EmailExist(ctx context.Context, email string) (bool, error)
 	GetByRecoveryToken(ctx context.Context, recoverToken string) (*domain.User, error)
 }
@@ -98,8 +101,8 @@ func (u User) UpdateUser(ctx context.Context, req *request.UserUpdate) error {
 		return err
 	}
 
-	if req.Email != "" {
-		user.Email = req.Email
+	if req.Name != "" {
+		user.Name = req.Name
 	}
 
 	err = u.UserRepo.UpdateUser(ctx, user)
@@ -119,38 +122,92 @@ func (u User) DeleteUser(ctx context.Context, id uint) error {
 }
 
 func (u User) Login(ctx context.Context, req *request.UserLogin) error {
-	user, err := u.UserRepo.GetUserByEmail(ctx, req.Email)
+	user, err := u.UserRepo.GetUserByName(ctx, req.Name)
 	if err != nil {
 		return err
 	}
 
 	if user.Password.IsValid(req.Password) {
-		var res response.UserLogin
-		res.Token, res.RefreshToken, err = jwt.IssueToken(config.UserRealm, jwt.Claims{
-			"uid": user.ID,
-		})
+		token, refreshToken, err := issueJWTToken(strconv.Itoa(int(user.ID)), config.Env.App.Secret)
 		if err != nil {
 			return errors.NewUnexpected(err)
 		}
+
+		var res response.UserLogin
+		res.Token = token
+		res.RefreshToken = refreshToken
+
 		return u.outputPort.Login(req.Session, &res)
 	}
 	return u.outputPort.Login(req.Session, nil)
 }
 
-func (u User) RefreshToken(req *request.UserRefreshToken) error {
-	var (
-		res response.UserLogin
-		ok  bool
-		err error
-	)
+func issueJWTToken(userID string, secretKey string) (string, string, error) {
+	// JWTトークンの生成
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"uid": userID,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	})
 
-	ok, res.Token, res.RefreshToken, err = jwt.RefreshToken(config.UserRealm, req.RefreshToken)
+	tokenString, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		return "", "", err
+	}
+
+	// リフレッシュトークンの生成
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"uid": userID,
+		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+	})
+
+	refreshTokenString, err := refreshToken.SignedString([]byte(secretKey))
+	if err != nil {
+		return "", "", err
+	}
+
+	return tokenString, refreshTokenString, nil
+}
+
+func (u User) RefreshToken(req *request.UserRefreshToken) error {
+	var res response.UserLogin
+
+	// リフレッシュトークンの検証
+	claims, err := verifyToken(req.RefreshToken, config.Env.App.Secret)
 	if err != nil {
 		return errors.NewUnexpected(err)
 	}
 
-	if !ok {
-		return nil
+	if claims == nil {
+		return nil // トークンが無効な場合は何もしない
 	}
+
+	// 新しいトークンとリフレッシュトークンを生成
+	newToken, newRefreshToken, err := issueJWTToken(claims["uid"].(string), config.Env.App.Secret)
+	if err != nil {
+		return errors.NewUnexpected(err)
+	}
+
+	res.Token = newToken
+	res.RefreshToken = newRefreshToken
+
 	return u.outputPort.RefreshToken(req.Session, &res)
+}
+
+func verifyToken(tokenString string, secretKey string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, stderrors.New("unexpected signing method")
+		}
+		return []byte(secretKey), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, stderrors.New("invalid token")
 }

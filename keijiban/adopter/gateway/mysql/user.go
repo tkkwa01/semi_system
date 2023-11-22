@@ -76,22 +76,22 @@ func (u user) DeleteUser(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (u user) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (u user) GetUserByName(ctx context.Context, name string) (*domain.User, error) {
 	db := ctx.DB()
 
 	var dest domain.User
-	err := db.Where(&domain.User{Email: email}).First(&dest).Error
+	err := db.Where(&domain.User{Name: name}).First(&dest).Error
 	if err != nil {
 		return nil, dbError(err)
 	}
 	return &dest, nil
 }
 
-func (u user) EmailExist(ctx context.Context, email string) (bool, error) {
+func (u user) EmailExist(ctx context.Context, name string) (bool, error) {
 	db := ctx.DB()
 
 	var count int64
-	if err := db.Model(&domain.User{}).Where(&domain.User{Email: email}).Count(&count).Error; err != nil {
+	if err := db.Model(&domain.User{}).Where(&domain.User{Name: name}).Count(&count).Error; err != nil {
 		return false, dbError(err)
 	}
 	return count > 0, nil
