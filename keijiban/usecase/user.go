@@ -35,9 +35,9 @@ type User struct {
 	outputPort UserOutputPort
 }
 
-type UsereInputFactory func(outputPort UserOutputPort) UserInputPort
+type UserInputFactory func(outputPort UserOutputPort) UserInputPort
 
-func NewUserInputFactory(ur UserRepository) UsereInputFactory {
+func NewUserInputFactory(ur UserRepository) UserInputFactory {
 	return func(outputPort UserOutputPort) UserInputPort {
 		return &User{
 			UserRepo:   ur,
