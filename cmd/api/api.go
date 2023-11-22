@@ -40,16 +40,20 @@ func Execute() {
 	//mysql
 	attendanceRepository := attendanceMysqlRepository.NewAttendanceRepository()
 	userRepository := keijibanMysqlRepository.NewUserRepository()
+	articleRepository := keijibanMysqlRepository.NewArticleRepository()
 
 	//usecase
 	attendanceInputFactory := usecase.NewAttendanceInputFactory(attendanceRepository)
 	attendanceOutputFactory := presenter.NewAttendanceOutputFactory()
 	userInputFactory := userUsecase.NewUserInputFactory(userRepository)
 	userOutputFactory := userPresenter.NewUserOutputFactory()
+	articleInputFactory := userUsecase.NewArticleInputFactory(articleRepository)
+	articleOutputFactory := userPresenter.NewArticleOutputFactory()
 
 	//controller
 	httpController.NewAttendance(r, attendanceInputFactory, attendanceOutputFactory)
 	userHttpController.NewUser(r, userInputFactory, userOutputFactory)
+	userHttpController.NewArticle(r, articleInputFactory, articleOutputFactory)
 
 	//serve
 	srv := &http.Server{

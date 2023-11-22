@@ -12,9 +12,9 @@ type article struct {
 
 type ArticleOutputFactory func(c *gin.Context) usecase.ArticleOutputPort
 
-func NewArticleOutputFactory(c *gin.Context) usecase.ArticleOutputPort {
-	return &article{
-		c: c,
+func NewArticleOutputFactory() ArticleOutputFactory {
+	return func(c *gin.Context) usecase.ArticleOutputPort {
+		return &article{c: c}
 	}
 }
 
