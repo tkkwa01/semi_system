@@ -100,19 +100,33 @@ func (a Article) Update(ctx context.Context, req *request.ArticleUpdate) error {
 	return a.outputPort.Update()
 }
 
+func (a Article) Delete(ctx context.Context, id uint) error {
+	currentUserID, err := getCurrentUserID(ctx)
+	if err != nil {
+		return err
+	}
+
+	article, err := a.articleRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if article.AuthorID != currentUserID {
+		return errors.New("unauthorized: you are not the author of this article")
+	}
+
+	err = a.articleRepo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return a.outputPort.Delete()
+}
+
 func getCurrentUserID(ctx context.Context) (uint, error) {
 	userID := ctx.UID()
 	if userID == 0 {
 		return 0, errors.New("unauthorized: user not authenticated")
 	}
 	return userID, nil
-}
-
-func (a Article) Delete(ctx context.Context, id uint) error {
-	err := a.articleRepo.Delete(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	return a.outputPort.Delete()
 }
