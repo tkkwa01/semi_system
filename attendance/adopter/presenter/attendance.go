@@ -25,6 +25,10 @@ func (a attendance) GetAllAttendance(res []*domain.Attendance) error {
 }
 
 func (a attendance) UpdateStatus(success bool) error {
-	a.c.JSON(http.StatusOK, gin.H{"success": success})
+	if success {
+		a.c.JSON(http.StatusOK, gin.H{"message": "Status updated"})
+	} else {
+		a.c.JSON(http.StatusInternalServerError, gin.H{"error": "Update failed"})
+	}
 	return nil
 }

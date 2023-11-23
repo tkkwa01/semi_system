@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"errors"
 	"semi_systems/keijiban/domain"
 	"semi_systems/keijiban/resource/request"
 	"semi_systems/packages/context"
@@ -71,9 +72,18 @@ func (a Article) GetAll(ctx context.Context) error {
 }
 
 func (a Article) Update(ctx context.Context, req *request.ArticleUpdate) error {
+	currentUserID, err := getCurrentUserID(ctx)
+	if err != nil {
+		return err
+	}
+
 	article, err := a.articleRepo.GetByID(ctx, req.ID)
 	if err != nil {
 		return err
+	}
+
+	if article.AuthorID != currentUserID {
+		return errors.New("unauthorized: you are not the author of this article")
 	}
 
 	if req.Title != "" {
@@ -88,6 +98,14 @@ func (a Article) Update(ctx context.Context, req *request.ArticleUpdate) error {
 		return err
 	}
 	return a.outputPort.Update()
+}
+
+func getCurrentUserID(ctx context.Context) (uint, error) {
+	userID := ctx.UID()
+	if userID == 0 {
+		return 0, errors.New("unauthorized: user not authenticated")
+	}
+	return userID, nil
 }
 
 func (a Article) Delete(ctx context.Context, id uint) error {
