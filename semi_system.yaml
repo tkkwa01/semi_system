@@ -11,6 +11,7 @@ produces:
   - application/json
 
 paths:
+  # User-related paths
   /user/login:
     post:
       summary: User Login
@@ -25,7 +26,7 @@ paths:
         200:
           description: Successful login
           schema:
-            $ref: '#/definitions/LoginResponse'
+            $ref: '#/definitions/UserLoginResponse'
         400:
           description: Invalid input
 
@@ -42,6 +43,8 @@ paths:
       responses:
         200:
           description: Successful token refresh
+          schema:
+            $ref: '#/definitions/UserLoginResponse'
         400:
           description: Invalid input
 
@@ -55,6 +58,7 @@ paths:
           schema:
             $ref: '#/definitions/User'
 
+  # Article-related paths
   /articles:
     get:
       summary: Get All Articles
@@ -67,38 +71,66 @@ paths:
             items:
               $ref: '#/definitions/Article'
 
+  /articles:
+    post:
+      summary: Create Article
+      description: Create a new article
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/ArticleCreate'
+      responses:
+        200:
+          description: Article created successfully
+          schema:
+            $ref: '#/definitions/Article'
+
+  /articles/{id}:
+    put:
+      summary: Update Article
+      description: Update an existing article
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: integer
+          format: int64
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/ArticleUpdate'
+      responses:
+        200:
+          description: Article updated successfully
+          schema:
+            $ref: '#/definitions/Article'
+
+  /articles/{id}:
+    delete:
+      summary: Delete Article
+      description: Delete an existing article
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Article deleted successfully
+
 definitions:
   UserLogin:
-    type: object
-    required:
-      - name
-      - password
-    properties:
-      session:
-        type: boolean
-      name:
-        type: string
-      password:
-        type: string
-
+  # ... (User Login definition)
   UserRefreshToken:
-    type: object
-    required:
-      - refresh_token
-    properties:
-      session:
-        type: boolean
-      refresh_token:
-        type: string
-
+  # ... (User Refresh Token definition)
+  UserLoginResponse:
+  # ... (User Login Response definition)
   User:
-    type: object
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-
+  # ... (User definition)
   Article:
     type: object
     properties:
@@ -112,9 +144,29 @@ definitions:
         type: string
       text:
         type: string
-
-  LoginResponse:
+  ArticleCreate:
     type: object
+    required:
+      - author_id
+      - title
+      - text
     properties:
-      token:
+      author_id:
+        type: integer
+      title:
+        type: string
+      text:
+        type: string
+  ArticleUpdate:
+    type: object
+    required:
+      - id
+      - title
+      - text
+    properties:
+      id:
+        type: integer
+      title:
+        type: string
+      text:
         type: string
