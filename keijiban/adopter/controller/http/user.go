@@ -26,7 +26,6 @@ func NewUser(r *router.Router, inputFactory usecase.UserInputFactory, outputFact
 	}
 
 	r.Group("user", nil, func(r *router.Router) {
-		r.Post("", handler.CreateUser)
 		r.Post("login", handler.Login)
 		r.Post("refresh-token", handler.RefreshToken)
 	})
@@ -36,19 +35,6 @@ func NewUser(r *router.Router, inputFactory usecase.UserInputFactory, outputFact
 			r.Get("me", handler.GetMe)
 		})
 	})
-}
-
-func (u user) CreateUser(ctx context.Context, c *gin.Context) error {
-	var req request.UserCreate
-
-	if !bind(c, &req) {
-		return nil
-	}
-
-	outputPort := u.outputFactory(c)
-	inputPort := u.inputFactory(outputPort)
-
-	return inputPort.CreateUser(ctx, &req)
 }
 
 func (u user) Login(ctx context.Context, c *gin.Context) error {
@@ -84,13 +70,26 @@ func (u user) GetMe(ctx context.Context, c *gin.Context) error {
 	return inputPort.GetUserByID(ctx, ctx.UID())
 }
 
-//ここより下のメソッドは今回は使わないことにした
-
 func (u user) GetAll(ctx context.Context, c *gin.Context) error {
 	outputPort := u.outputFactory(c)
 	inputPort := u.inputFactory(outputPort)
 
 	return inputPort.GetAllUser(ctx)
+}
+
+//ここより下のメソッドは今回は使わないことにした
+
+func (u user) CreateUser(ctx context.Context, c *gin.Context) error {
+	var req request.UserCreate
+
+	if !bind(c, &req) {
+		return nil
+	}
+
+	outputPort := u.outputFactory(c)
+	inputPort := u.inputFactory(outputPort)
+
+	return inputPort.CreateUser(ctx, &req)
 }
 
 func (u user) GetUserByID(ctx context.Context, c *gin.Context) error {

@@ -7,9 +7,8 @@ type UserCreate struct {
 }
 
 type UserUpdate struct {
-	ID           uint   `json:"id"`
-	Name         string `json:"name"`
-	Introduction string `json:"introduction"`
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
 }
 
 type UserLogin struct {
