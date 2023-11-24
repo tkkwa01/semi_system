@@ -60,18 +60,6 @@ paths:
 
   # Article-related paths
   /articles:
-    get:
-      summary: Get All Articles
-      description: Returns all articles
-      responses:
-        200:
-          description: An array of articles
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Article'
-
-  /articles:
     post:
       summary: Create Article
       description: Create a new article
@@ -107,20 +95,6 @@ paths:
           description: Article updated successfully
           schema:
             $ref: '#/definitions/Article'
-
-  /articles/{id}:
-    delete:
-      summary: Delete Article
-      description: Delete an existing article
-      parameters:
-        - in: path
-          name: id
-          required: true
-          type: integer
-          format: int64
-      responses:
-        200:
-          description: Article deleted successfully
 
 definitions:
   UserLogin:
