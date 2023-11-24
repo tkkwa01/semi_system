@@ -17,8 +17,9 @@ var db *gorm.DB
 func NewDB() (*gorm.DB, error) {
 	// 環境変数からMySQLの接続情報を取得
 	cfg := config.Env.DB
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name)
+	dsn := fmt.Sprintf("root:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		//cfg.User,
+		cfg.Password, cfg.Host, cfg.Port, cfg.Name)
 
 	var err error
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
@@ -35,10 +36,6 @@ func NewDB() (*gorm.DB, error) {
 	}
 
 	return db, nil
-}
-
-func GetRDB() *gorm.DB {
-	return db
 }
 
 func init() {
@@ -75,4 +72,8 @@ func connectWithRetry() {
 	if err := backoff.Retry(operation, backOff); err != nil {
 		log.Fatalf("Failed to connect to database after retries: %v", err)
 	}
+}
+
+func GetRDB() *gorm.DB {
+	return db
 }
