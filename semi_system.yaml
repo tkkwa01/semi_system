@@ -1,0 +1,241 @@
+openapi: 3.0.0
+info:
+  title: Keijiban API
+  description: API for user and article management in the Keijiban system.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  # 記事管理のエンドポイント
+  /articles:
+    get:
+      summary: Get all articles
+      responses:
+        '200':
+          description: A list of articles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Article'
+
+  /article:
+    post:
+      summary: Create a new article
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreate'
+      responses:
+        '200':
+          description: Article created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        '400':
+          description: Invalid request
+
+  /article/{id}:
+    put:
+      summary: Update an article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleUpdate'
+      responses:
+        '200':
+          description: Article updated successfully
+        '400':
+          description: Invalid request or ID format
+
+    delete:
+      summary: Delete an article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Article deleted successfully
+        '400':
+          description: Invalid ID format
+
+  # ユーザー管理のエンドポイント
+  /users:
+    post:
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        '400':
+          description: Invalid request
+
+    get:
+      summary: Get all users
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /user/{id}:
+    get:
+      summary: Get a user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid ID format
+
+    put:
+      summary: Update a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated successfully
+        '400':
+          description: Invalid request or ID format
+
+    delete:
+      summary: Delete a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User deleted successfully
+        '400':
+          description: Invalid ID format
+
+components:
+  schemas:
+    # 記事に関するスキーマ
+    Article:
+      type: object
+      properties:
+        id:
+          type: integer
+        author:
+          type: string
+        title:
+          type: string
+        text:
+          type: string
+
+    ArticleCreate:
+      type: object
+      properties:
+        author_id:
+          type: integer
+        author:
+          type: string
+        title:
+          type: string
+        text:
+          type: string
+
+    ArticleUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+        author_id:
+          type: integer
+        author:
+          type: string
+        title:
+          type: string
+        text:
+          type: string
+
+    # ユーザーに関するスキーマ
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        introduction:
+          type: string
+
+    UserCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        password:
+          type: string
+        password_confirm:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        introduction:
+          type: string
