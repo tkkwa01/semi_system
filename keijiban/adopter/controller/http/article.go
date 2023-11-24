@@ -30,7 +30,7 @@ func NewArticle(r *router.Router, inputFactory usecase.ArticleInputFactory, outp
 
 	// 認証を必要とする記事関連のルーティング
 	r.Group("", []gin.HandlerFunc{middleware.Auth(true, config.UserRealm, true)}, func(r *router.Router) {
-		r.Group("", nil, func(r *router.Router) {
+		r.Group("articles", nil, func(r *router.Router) {
 			r.Post("", handler.Create)
 			r.Put(":id", handler.Update)
 			r.Delete(":id", handler.Delete)
