@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func Auth(must bool, realm string, session bool) gin.HandlerFunc {
+func Auth(must bool, session bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenString string
 		if session {

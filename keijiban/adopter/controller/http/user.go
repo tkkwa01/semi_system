@@ -3,7 +3,6 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"semi_systems/config"
 	"semi_systems/keijiban/adopter/presenter"
 	"semi_systems/keijiban/resource/request"
 	"semi_systems/keijiban/usecase"
@@ -30,7 +29,7 @@ func NewUser(r *router.Router, inputFactory usecase.UserInputFactory, outputFact
 		r.Post("refresh-token", handler.RefreshToken)
 	})
 
-	r.Group("", []gin.HandlerFunc{middleware.Auth(true, config.UserRealm, true)}, func(r *router.Router) {
+	r.Group("", []gin.HandlerFunc{middleware.Auth(true, true)}, func(r *router.Router) {
 		r.Group("user", nil, func(r *router.Router) {
 			r.Get("me", handler.GetMe)
 		})
