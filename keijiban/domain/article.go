@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"semi_systems/keijiban/resource/request"
-	"semi_systems/packages/context"
 	"time"
 )
 
@@ -13,18 +11,4 @@ type Article struct {
 	Title     string    `json:"title"`
 	Text      string    `json:"text"`
 	CreatedAt time.Time `json:"created_at"`
-}
-
-func NewArticle(ctx context.Context, dto *request.ArticleCreate) (*Article, error) {
-	var article = Article{
-		Author: dto.Author,
-		Title:  dto.Title,
-		Text:   dto.Text,
-	}
-
-	if ctx.IsInValid() {
-		return nil, ctx.ValidationError()
-	}
-
-	return &article, nil
 }
