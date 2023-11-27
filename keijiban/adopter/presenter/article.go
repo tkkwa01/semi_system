@@ -37,3 +37,8 @@ func (a article) Delete() error {
 	a.c.JSON(200, gin.H{})
 	return nil
 }
+
+func (a article) GetMy(res *domain.Article) error {
+	a.c.JSON(200, res)
+	return nil
+}

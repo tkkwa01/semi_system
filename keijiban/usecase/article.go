@@ -12,12 +12,14 @@ type ArticleInputPort interface {
 	GetAll(ctx context.Context) error
 	Update(ctx context.Context, req *request.ArticleUpdate) error
 	Delete(ctx context.Context, id uint) error
+	GetMy(ctx context.Context, id uint) error
 }
 type ArticleOutputPort interface {
 	Create(id uint) error
 	GetAll(res []*domain.Article) error
 	Update() error
 	Delete() error
+	GetMy(res *domain.Article) error
 }
 
 type ArticleRepository interface {
@@ -26,6 +28,7 @@ type ArticleRepository interface {
 	Update(ctx context.Context, article *domain.Article) error
 	Delete(ctx context.Context, id uint) error
 	GetByID(ctx context.Context, id uint) (*domain.Article, error)
+	GetMy(ctx context.Context, id uint) error
 }
 
 type Article struct {
@@ -121,6 +124,29 @@ func (a Article) Delete(ctx context.Context, id uint) error {
 	}
 
 	return a.outputPort.Delete()
+}
+
+func (a Article) GetMy(ctx context.Context, id uint) error {
+	currentUserID, err := getCurrentUserID(ctx)
+	if err != nil {
+		return err
+	}
+
+	article, err := a.articleRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if article.AuthorID != currentUserID {
+		return errors.New("unauthorized: you are not the author of this article")
+	}
+
+	err = a.articleRepo.GetMy(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return a.outputPort.GetMy(article)
 }
 
 func getCurrentUserID(ctx context.Context) (uint, error) {

@@ -33,6 +33,7 @@ func NewArticle(r *router.Router, inputFactory usecase.ArticleInputFactory, outp
 			r.Post("", handler.Create)
 			r.Put(":id", handler.Update)
 			r.Delete(":id", handler.Delete)
+			r.Get(":id", handler.GetMy)
 		})
 	})
 }
@@ -93,4 +94,17 @@ func (a article) Delete(ctx context.Context, c *gin.Context) error {
 	inputPort := a.inputFactory(outputPort)
 
 	return inputPort.Delete(ctx, uint(id))
+}
+
+func (a article) GetMy(ctx context.Context, c *gin.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return err
+	}
+
+	outputPort := a.outputFactory(c)
+	inputPort := a.inputFactory(outputPort)
+
+	return inputPort.GetMy(ctx, uint(id))
 }
