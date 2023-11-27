@@ -38,7 +38,7 @@ func Execute() {
 	engine.Use(middleware.Cors(nil))
 
 	store := cookie.NewStore([]byte("secret"))
-	engine.Use(sessions.Sessions("session_name", store))
+	engine.Use(sessions.Sessions("user", store))
 
 	r := router.New(engine, driver.GetRDB)
 

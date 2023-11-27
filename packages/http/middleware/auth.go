@@ -18,11 +18,16 @@ func Auth(must bool, session bool) gin.HandlerFunc {
 			sess := sessions.Default(c)
 			token := sess.Get("user")
 			if t, ok := token.(string); ok {
-				tokenString = t
+				c.Request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", t))
 			}
 		}
 
 		if tokenString == "" {
+			tokenString = extractToken(c)
+		}
+
+		if tokenString == "" {
+			// トークンが見つからない場合
 			if must {
 				c.AbortWithStatus(http.StatusUnauthorized)
 			} else {
@@ -32,7 +37,7 @@ func Auth(must bool, session bool) gin.HandlerFunc {
 		}
 
 		// トークンの検証
-		_, err := verifyToken(tokenString, config.Env.App.Secret)
+		claims, err := verifyToken(tokenString, config.Env.App.Secret)
 		if err != nil {
 			if must {
 				c.AbortWithStatus(http.StatusUnauthorized)
@@ -40,6 +45,10 @@ func Auth(must bool, session bool) gin.HandlerFunc {
 				c.Next()
 			}
 			return
+		}
+
+		if userID, ok := claims["user_id"].(float64); ok {
+			c.Set("user_id", userID)
 		}
 
 		c.Next()

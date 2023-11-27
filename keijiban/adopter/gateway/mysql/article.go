@@ -72,3 +72,13 @@ func (a article) GetMy(ctx context.Context, id uint) error {
 	}
 	return nil
 }
+
+func (a article) GetByUserID(ctx context.Context, userID uint) ([]*domain.Article, error) {
+	db := ctx.DB()
+
+	var articles []*domain.Article
+	if err := db.Where("author_id = ?", userID).Find(&articles).Error; err != nil {
+		return nil, dbError(err)
+	}
+	return articles, nil
+}
