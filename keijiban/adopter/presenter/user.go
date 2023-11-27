@@ -4,7 +4,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"semi_systems/config"
 	"semi_systems/keijiban/domain"
 	"semi_systems/keijiban/resource/response"
 	"semi_systems/keijiban/usecase"
@@ -54,7 +53,7 @@ func (u user) Login(isSession bool, res *response.UserLogin) error {
 	}
 
 	if isSession {
-		session := sessions.DefaultMany(u.c, config.UserRealm)
+		session := sessions.Default(u.c)
 		session.Set("user", res.Token)
 		session.Set("refresh_token", res.RefreshToken)
 		if err := session.Save(); err != nil {
@@ -74,7 +73,7 @@ func (u user) RefreshToken(isSession bool, res *response.UserLogin) error {
 	}
 
 	if isSession {
-		session := sessions.DefaultMany(u.c, config.UserRealm)
+		session := sessions.Default(u.c)
 		session.Set("user", res.Token)
 		session.Set("refresh_token", res.RefreshToken)
 		if err := session.Save(); err != nil {

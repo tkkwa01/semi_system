@@ -2,6 +2,8 @@ package api
 
 import (
 	"fmt"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/net/context"
 	"net/http"
@@ -34,6 +36,9 @@ func Execute() {
 
 	// cors
 	engine.Use(middleware.Cors(nil))
+
+	store := cookie.NewStore([]byte("secret"))
+	engine.Use(sessions.Sessions("session_name", store))
 
 	r := router.New(engine, driver.GetRDB)
 
