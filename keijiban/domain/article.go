@@ -17,10 +17,9 @@ type Article struct {
 
 func NewArticle(ctx context.Context, dto *request.ArticleCreate) (*Article, error) {
 	var article = Article{
-		AuthorID: dto.AuthorID,
-		Author:   dto.Author,
-		Title:    dto.Title,
-		Text:     dto.Text,
+		Author: dto.Author,
+		Title:  dto.Title,
+		Text:   dto.Text,
 	}
 
 	if ctx.IsInValid() {

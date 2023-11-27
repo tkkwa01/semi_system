@@ -3,7 +3,6 @@ FROM golang:1.20 as builder
 WORKDIR /go/src
 
 RUN go install github.com/cosmtrek/air@latest
-RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 ENV GO111MODULE=on
 
@@ -12,6 +11,4 @@ RUN go mod download
 
 ENV DOTENV_PATH=/go/src/.env
 
-COPY .air.toml ./
-
-CMD ["air"]
+CMD ["air", "-c", "empty.air.toml"]

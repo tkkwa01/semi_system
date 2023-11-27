@@ -61,3 +61,24 @@ func (a article) GetByID(ctx context.Context, id uint) (*domain.Article, error) 
 	}
 	return &article, nil
 }
+
+func (a article) GetMy(ctx context.Context, id uint) error {
+	db := ctx.DB()
+
+	var article domain.Article
+	err := db.Where(&domain.Article{ID: id}).First(&article).Error
+	if err != nil {
+		return dbError(err)
+	}
+	return nil
+}
+
+func (a article) GetByUserID(ctx context.Context, userID uint) ([]*domain.Article, error) {
+	db := ctx.DB()
+
+	var articles []*domain.Article
+	if err := db.Where("author_id = ?", userID).Find(&articles).Error; err != nil {
+		return nil, dbError(err)
+	}
+	return articles, nil
+}

@@ -1,16 +1,13 @@
 package request
 
 type ArticleCreate struct {
-	AuthorID uint   `json:"author_id"`
-	Author   string `json:"author"`
-	Title    string `json:"title"`
-	Text     string `json:"text"`
+	Author string `json:"author"`
+	Title  string `json:"title"`
+	Text   string `json:"text"`
 }
 
 type ArticleUpdate struct {
-	ID       uint   `json:"id"`
-	AuthorID uint   `json:"author_id"`
-	Author   string `json:"author"`
-	Title    string `json:"title"`
-	Text     string `json:"text"`
+	ID    uint   `json:"id"`
+	Title string `json:"title"`
+	Text  string `json:"text"`
 }

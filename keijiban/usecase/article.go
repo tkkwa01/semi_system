@@ -12,12 +12,14 @@ type ArticleInputPort interface {
 	GetAll(ctx context.Context) error
 	Update(ctx context.Context, req *request.ArticleUpdate) error
 	Delete(ctx context.Context, id uint) error
+	GetMy(ctx context.Context, id uint) error
 }
 type ArticleOutputPort interface {
 	Create(id uint) error
 	GetAll(res []*domain.Article) error
 	Update() error
 	Delete() error
+	GetMy(res *domain.Article) error
 }
 
 type ArticleRepository interface {
@@ -26,6 +28,8 @@ type ArticleRepository interface {
 	Update(ctx context.Context, article *domain.Article) error
 	Delete(ctx context.Context, id uint) error
 	GetByID(ctx context.Context, id uint) (*domain.Article, error)
+	GetMy(ctx context.Context, id uint) error
+	GetByUserID(ctx context.Context, userID uint) ([]*domain.Article, error)
 }
 
 type Article struct {
@@ -45,16 +49,19 @@ func NewArticleInputFactory(ar ArticleRepository) ArticleInputFactory {
 }
 
 func (a Article) Create(ctx context.Context, req *request.ArticleCreate) error {
-	newArticle, err := domain.NewArticle(ctx, req)
-	if err != nil {
-		return err
+	userID := ctx.UID()
+
+	newArticle := domain.Article{
+		AuthorID: userID,
+		Title:    req.Title,
+		Text:     req.Text,
 	}
 
 	if ctx.IsInValid() {
 		return ctx.ValidationError()
 	}
 
-	id, err := a.articleRepo.Create(ctx, newArticle)
+	id, err := a.articleRepo.Create(ctx, &newArticle)
 	if err != nil {
 		return err
 	}
@@ -72,10 +79,7 @@ func (a Article) GetAll(ctx context.Context) error {
 }
 
 func (a Article) Update(ctx context.Context, req *request.ArticleUpdate) error {
-	currentUserID, err := getCurrentUserID(ctx)
-	if err != nil {
-		return err
-	}
+	currentUserID := ctx.UID()
 
 	article, err := a.articleRepo.GetByID(ctx, req.ID)
 	if err != nil {
@@ -101,10 +105,7 @@ func (a Article) Update(ctx context.Context, req *request.ArticleUpdate) error {
 }
 
 func (a Article) Delete(ctx context.Context, id uint) error {
-	currentUserID, err := getCurrentUserID(ctx)
-	if err != nil {
-		return err
-	}
+	currentUserID := ctx.UID()
 
 	article, err := a.articleRepo.GetByID(ctx, id)
 	if err != nil {
@@ -121,6 +122,17 @@ func (a Article) Delete(ctx context.Context, id uint) error {
 	}
 
 	return a.outputPort.Delete()
+}
+
+func (a Article) GetMy(ctx context.Context, id uint) error {
+	currentUserID := ctx.UID()
+
+	article, err := a.articleRepo.GetByUserID(ctx, currentUserID)
+	if err != nil {
+		return err
+	}
+
+	return a.outputPort.GetAll(article)
 }
 
 func getCurrentUserID(ctx context.Context) (uint, error) {
