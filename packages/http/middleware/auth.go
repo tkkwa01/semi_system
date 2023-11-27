@@ -10,19 +10,16 @@ import (
 	"strings"
 )
 
-func Auth(must bool, realm string, session bool) gin.HandlerFunc {
+func Auth(must bool, session bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenString string
 		if session {
 			// セッションからトークンを取得
-			session := sessions.DefaultMany(c, realm)
-			token := session.Get("token")
+			sess := sessions.Default(c)
+			token := sess.Get("token")
 			if t, ok := token.(string); ok {
 				tokenString = t
 			}
-		} else {
-			// ヘッダーからトークンを取得
-			tokenString = extractToken(c)
 		}
 
 		if tokenString == "" {

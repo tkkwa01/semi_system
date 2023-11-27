@@ -66,10 +66,17 @@ func loadUsersFromFile(db *gorm.DB) {
 
 		name, password := parts[0], parts[1]
 
+		// パスワードをハッシュ化
+		hashedPassword, err := vobj.NewPassword(password)
+		if err != nil {
+			fmt.Printf("Error hashing password for user %s: %v\n", name, err)
+			continue
+		}
+
 		// 新しいユーザーオブジェクトを作成
 		user := userdomain.User{
 			Name:          name,
-			Password:      vobj.Password(password),
+			Password:      *hashedPassword,
 			RecoveryToken: vobj.NewRecoveryToken(""),
 		}
 

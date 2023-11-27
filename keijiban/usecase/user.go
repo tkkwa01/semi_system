@@ -2,6 +2,7 @@ package usecase
 
 import (
 	stderrors "errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"semi_systems/config"
 	"semi_systems/keijiban/domain"
@@ -122,14 +123,18 @@ func (u User) DeleteUser(ctx context.Context, id uint) error {
 }
 
 func (u User) Login(ctx context.Context, req *request.UserLogin) error {
+	fmt.Println("login...")
 	user, err := u.UserRepo.GetUserByName(ctx, req.Name)
 	if err != nil {
+		fmt.Println("Error getting user by name:", err)
 		return err
 	}
 
 	if user.Password.IsValid(req.Password) {
-		token, refreshToken, err := issueJWTToken(strconv.Itoa(int(user.ID)), config.Env.App.Secret)
+		fmt.Println("Password is valid")
+		token, refreshToken, err := issueJWTToken(strconv.Itoa(int(user.ID)), "user", config.Env.App.Secret)
 		if err != nil {
+			fmt.Println("Error issuing JWT token:", err)
 			return errors.NewUnexpected(err)
 		}
 
@@ -138,15 +143,18 @@ func (u User) Login(ctx context.Context, req *request.UserLogin) error {
 		res.RefreshToken = refreshToken
 
 		return u.outputPort.Login(req.Session, &res)
+	} else {
+		fmt.Println("Invalid password")
 	}
 	return u.outputPort.Login(req.Session, nil)
 }
 
-func issueJWTToken(userID string, secretKey string) (string, string, error) {
+func issueJWTToken(userID, realm, secretKey string) (string, string, error) {
 	// JWTトークンの生成
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"uid": userID,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
+		"uid":   userID,
+		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+		"realm": realm,
 	})
 
 	tokenString, err := token.SignedString([]byte(secretKey))
@@ -156,8 +164,9 @@ func issueJWTToken(userID string, secretKey string) (string, string, error) {
 
 	// リフレッシュトークンの生成
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"uid": userID,
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"uid":   userID,
+		"exp":   time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"realm": realm,
 	})
 
 	refreshTokenString, err := refreshToken.SignedString([]byte(secretKey))
@@ -171,8 +180,8 @@ func issueJWTToken(userID string, secretKey string) (string, string, error) {
 func (u User) RefreshToken(req *request.UserRefreshToken) error {
 	var res response.UserLogin
 
-	// リフレッシュトークンの検証
-	claims, err := verifyToken(req.RefreshToken, config.Env.App.Secret)
+	// ここでrealmを指定
+	claims, err := verifyToken(req.RefreshToken, "user", config.Env.App.Secret)
 	if err != nil {
 		return errors.NewUnexpected(err)
 	}
@@ -181,8 +190,7 @@ func (u User) RefreshToken(req *request.UserRefreshToken) error {
 		return nil // トークンが無効な場合は何もしない
 	}
 
-	// 新しいトークンとリフレッシュトークンを生成
-	newToken, newRefreshToken, err := issueJWTToken(claims["uid"].(string), config.Env.App.Secret)
+	newToken, newRefreshToken, err := issueJWTToken(claims["uid"].(string), "user", config.Env.App.Secret)
 	if err != nil {
 		return errors.NewUnexpected(err)
 	}
@@ -193,7 +201,7 @@ func (u User) RefreshToken(req *request.UserRefreshToken) error {
 	return u.outputPort.RefreshToken(req.Session, &res)
 }
 
-func verifyToken(tokenString string, secretKey string) (jwt.MapClaims, error) {
+func verifyToken(tokenString, realm, secretKey string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, stderrors.New("unexpected signing method")
@@ -206,6 +214,9 @@ func verifyToken(tokenString string, secretKey string) (jwt.MapClaims, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if claims["realm"] != realm {
+			return nil, stderrors.New("invalid realm")
+		}
 		return claims, nil
 	}
 

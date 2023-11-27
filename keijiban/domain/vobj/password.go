@@ -3,22 +3,17 @@ package vobj
 import (
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"semi_systems/config"
-	"semi_systems/packages/context"
 	"semi_systems/packages/errors"
 )
 
 type Password string
 
-func NewPassword(ctx context.Context, password, passwordConfirm string) (*Password, error) {
-	if password != passwordConfirm {
-		ctx.FieldError("PasswordConfirm", "パスワードと一致しません")
-		return nil, nil
-	}
-
+func NewPassword(password string) (*Password, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), config.BcryptHashCost)
 	if err != nil {
 		return nil, errors.NewUnexpected(err)
@@ -29,7 +24,13 @@ func NewPassword(ctx context.Context, password, passwordConfirm string) (*Passwo
 }
 
 func (p *Password) IsValid(password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(*p), []byte(password)) == nil
+	fmt.Println("using isvalid...")
+	err := bcrypt.CompareHashAndPassword([]byte(*p), []byte(password))
+	if err != nil {
+		fmt.Println("Password comparison error:", err)
+		return false
+	}
+	return true
 }
 
 // sql
