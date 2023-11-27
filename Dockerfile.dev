@@ -8,9 +8,10 @@ RUN go install github.com/go-delve/delve/cmd/dlv@latest
 ENV GO111MODULE=on
 
 COPY go.mod go.sum ./
-
 RUN go mod download
 
 ENV DOTENV_PATH=/go/src/.env
 
-CMD ["dlv", "debug", "--headless", "--listen=:2345", "--api-version=2", "--log"]
+COPY .air.toml ./
+
+CMD ["air"]
