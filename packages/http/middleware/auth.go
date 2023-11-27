@@ -16,7 +16,7 @@ func Auth(must bool, session bool) gin.HandlerFunc {
 		if session {
 			// セッションからトークンを取得
 			sess := sessions.Default(c)
-			token := sess.Get("token")
+			token := sess.Get("user")
 			if t, ok := token.(string); ok {
 				tokenString = t
 			}
