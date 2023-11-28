@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"log"
 	"semi_systems/keijiban/domain"
 	"semi_systems/keijiban/resource/request"
 	"semi_systems/packages/context"
@@ -12,7 +13,7 @@ type ArticleInputPort interface {
 	GetAll(ctx context.Context) error
 	Update(ctx context.Context, req *request.ArticleUpdate) error
 	Delete(ctx context.Context, id uint) error
-	GetMy(ctx context.Context, id uint) error
+	GetMy(ctx context.Context) error
 }
 type ArticleOutputPort interface {
 	Create(id uint) error
@@ -50,9 +51,13 @@ func NewArticleInputFactory(ar ArticleRepository) ArticleInputFactory {
 
 func (a Article) Create(ctx context.Context, req *request.ArticleCreate) error {
 	userID := ctx.UID()
+	userName := ctx.UserName()
+
+	log.Printf("Creating article with userID: %d, userName: %s\n", userID, userName)
 
 	newArticle := domain.Article{
 		AuthorID: userID,
+		Author:   userName,
 		Title:    req.Title,
 		Text:     req.Text,
 	}
@@ -124,7 +129,7 @@ func (a Article) Delete(ctx context.Context, id uint) error {
 	return a.outputPort.Delete()
 }
 
-func (a Article) GetMy(ctx context.Context, id uint) error {
+func (a Article) GetMy(ctx context.Context) error {
 	currentUserID := ctx.UID()
 
 	article, err := a.articleRepo.GetByUserID(ctx, currentUserID)
@@ -133,12 +138,4 @@ func (a Article) GetMy(ctx context.Context, id uint) error {
 	}
 
 	return a.outputPort.GetAll(article)
-}
-
-func getCurrentUserID(ctx context.Context) (uint, error) {
-	userID := ctx.UID()
-	if userID == 0 {
-		return 0, errors.New("unauthorized: user not authenticated")
-	}
-	return userID, nil
 }

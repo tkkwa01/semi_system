@@ -5,8 +5,10 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"semi_systems/config"
+	"strconv"
 	"strings"
 )
 
@@ -37,6 +39,7 @@ func Auth(must bool, session bool) gin.HandlerFunc {
 		}
 
 		// トークンの検証
+		log.Printf("Verifying token: %s\n", tokenString)
 		claims, err := verifyToken(tokenString, config.Env.App.Secret)
 		if err != nil {
 			if must {
@@ -47,10 +50,19 @@ func Auth(must bool, session bool) gin.HandlerFunc {
 			return
 		}
 
-		if userID, ok := claims["user_id"].(float64); ok {
-			c.Set("user_id", userID)
+		if userIDStr, ok := claims["uid"].(string); ok {
+			userID, err := strconv.Atoi(userIDStr)
+			if err != nil {
+				log.Printf("Error converting userID to int: %v", err)
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+			c.Set("user_id", uint(userID))
 		}
 
+		if userName, ok := claims["user_name"].(string); ok {
+			c.Set("user_name", userName)
+		}
 		c.Next()
 	}
 }

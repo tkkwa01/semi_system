@@ -97,14 +97,8 @@ func (a article) Delete(ctx context.Context, c *gin.Context) error {
 }
 
 func (a article) GetMy(ctx context.Context, c *gin.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-		return err
-	}
-
 	outputPort := a.outputFactory(c)
 	inputPort := a.inputFactory(outputPort)
 
-	return inputPort.GetMy(ctx, uint(id))
+	return inputPort.GetMy(ctx)
 }

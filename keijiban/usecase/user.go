@@ -4,6 +4,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"log"
 	"semi_systems/config"
 	"semi_systems/keijiban/domain"
 	"semi_systems/keijiban/resource/request"
@@ -132,7 +133,7 @@ func (u User) Login(ctx context.Context, req *request.UserLogin) error {
 
 	if user.Password.IsValid(req.Password) {
 		fmt.Println("Password is valid")
-		token, refreshToken, err := issueJWTToken(strconv.Itoa(int(user.ID)), "user", config.Env.App.Secret)
+		token, refreshToken, err := issueJWTToken(strconv.Itoa(int(user.ID)), user.Name, "user", config.Env.App.Secret)
 		if err != nil {
 			fmt.Println("Error issuing JWT token:", err)
 			return errors.NewUnexpected(err)
@@ -149,12 +150,13 @@ func (u User) Login(ctx context.Context, req *request.UserLogin) error {
 	return u.outputPort.Login(req.Session, nil)
 }
 
-func issueJWTToken(userID, realm, secretKey string) (string, string, error) {
+func issueJWTToken(userID, userName, realm, secretKey string) (string, string, error) {
 	// JWTトークンの生成
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"uid":   userID,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
-		"realm": realm,
+		"uid":       userID,
+		"user_name": userName,
+		"exp":       time.Now().Add(time.Hour * 24).Unix(),
+		"realm":     realm,
 	})
 
 	tokenString, err := token.SignedString([]byte(secretKey))
@@ -162,11 +164,13 @@ func issueJWTToken(userID, realm, secretKey string) (string, string, error) {
 		return "", "", err
 	}
 
+	log.Printf("Login with userID: %s, userName: %s\n", userID, userName)
+
 	// リフレッシュトークンの生成
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"uid":   userID,
-		"exp":   time.Now().Add(time.Hour * 24 * 7).Unix(),
-		"realm": realm,
+		"user_id": userID,
+		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"realm":   realm,
 	})
 
 	refreshTokenString, err := refreshToken.SignedString([]byte(secretKey))
@@ -190,7 +194,10 @@ func (u User) RefreshToken(req *request.UserRefreshToken) error {
 		return nil // トークンが無効な場合は何もしない
 	}
 
-	newToken, newRefreshToken, err := issueJWTToken(claims["uid"].(string), "user", config.Env.App.Secret)
+	userID := claims["user_id"].(string)
+	userName := claims["user_name"].(string)
+
+	newToken, newRefreshToken, err := issueJWTToken(userID, userName, "user", config.Env.App.Secret)
 	if err != nil {
 		return errors.NewUnexpected(err)
 	}
