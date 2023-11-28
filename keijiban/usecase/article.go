@@ -18,7 +18,7 @@ type ArticleInputPort interface {
 type ArticleOutputPort interface {
 	Create(id uint) error
 	GetAll(res []*domain.Article) error
-	Update() error
+	Update(res *domain.Article) error
 	Delete() error
 	GetMy(res *domain.Article) error
 }
@@ -106,7 +106,7 @@ func (a Article) Update(ctx context.Context, req *request.ArticleUpdate) error {
 	if err != nil {
 		return err
 	}
-	return a.outputPort.Update()
+	return a.outputPort.Update(article)
 }
 
 func (a Article) Delete(ctx context.Context, id uint) error {

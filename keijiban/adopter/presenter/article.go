@@ -28,8 +28,8 @@ func (a article) GetAll(res []*domain.Article) error {
 	return nil
 }
 
-func (a article) Update() error {
-	a.c.JSON(200, gin.H{})
+func (a article) Update(res *domain.Article) error {
+	a.c.JSON(200, res)
 	return nil
 }
 
