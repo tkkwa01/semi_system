@@ -33,7 +33,7 @@ func NewArticle(r *router.Router, inputFactory usecase.ArticleInputFactory, outp
 			r.Post("", handler.Create)
 			r.Put(":id", handler.Update)
 			r.Delete(":id", handler.Delete)
-			r.Get(":id", handler.GetMy)
+			r.Get("/myarticles", handler.GetMy)
 		})
 	})
 }
