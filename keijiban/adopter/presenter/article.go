@@ -34,7 +34,7 @@ func (a article) Update(res *domain.Article) error {
 }
 
 func (a article) Delete() error {
-	a.c.JSON(200, gin.H{})
+	a.c.JSON(200, gin.H{"message": "article delete successfully"})
 	return nil
 }
 
