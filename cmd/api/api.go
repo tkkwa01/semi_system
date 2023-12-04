@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 	attendanceMysqlRepository "semi_systems/attendance/adopter/gateway/mysql"
 	"semi_systems/attendance/adopter/presenter"
 	"semi_systems/attendance/usecase"
+	"semi_systems/chat"
 	"semi_systems/config"
 	"semi_systems/driver"
 	userHttpController "semi_systems/keijiban/adopter/controller/http"
@@ -26,13 +28,17 @@ import (
 	"time"
 )
 
-func Execute() {
+func Execute(hub *chat.Hub) {
 	logger := log.Logger()
 	defer logger.Sync()
 
 	engine := gin.New()
 
 	engine.GET("health", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	engine.GET("/ws", func(c *gin.Context) {
+		serveWs(hub, c.Writer, c.Request)
+	})
 
 	// cors
 	engine.Use(middleware.Cors(nil))
@@ -88,4 +94,27 @@ func Execute() {
 	}
 
 	logger.Info("Server existing")
+}
+
+func serveWs(hub *chat.Hub, w http.ResponseWriter, r *http.Request) {
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			// ここでクライアントのオリジンを検証します。
+			// 安全でないがテスト目的であれば、すべてのオリジンを許可することができます。
+			// 本番環境では、特定のオリジンのみを許可するように厳密に設定してください。
+			return true
+		},
+	}
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Logger().Error(fmt.Sprintf("Failed to set websocket upgrade: %+v", err))
+		return
+	}
+	client := chat.NewClient(conn)
+	hub.RegisterCh <- client
+
+	go client.WriteLoop()
+	go client.ReadLoop(hub)
 }
